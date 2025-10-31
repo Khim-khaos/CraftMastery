@@ -295,19 +295,6 @@ public class RecipeTreeWidget extends Gui {
         boolean isStudied = isNodeStudied(node);
         boolean canStudy = canStudyNode(node);
 
-        ResourceLocation background = isStudied ? NODE_TEXTURE_STUDIED : NODE_TEXTURE_UNLOCKED;
-        textureManager.bindTexture(background);
-        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-        drawModalRectWithCustomSizedTexture(
-                node.getX() - NODE_SIZE / 2,
-                node.getY() - NODE_SIZE / 2,
-                0,
-                0,
-                NODE_SIZE,
-                NODE_SIZE,
-                NODE_TEXTURE_SIZE,
-                NODE_TEXTURE_SIZE);
-
         drawNodeIcon(node, textureManager, isStudied);
         drawNodeLabels(node, isStudied, canStudy);
         drawCostLabel(node, canStudy, isStudied);
@@ -589,7 +576,14 @@ public class RecipeTreeWidget extends Gui {
         GlStateManager.enableTexture2D();
     }
 
-    public void handleMouseClick(int mouseX, int mouseY, float offsetX, float offsetY, float scale) {
+    private boolean isPointInNode(float x, float y, Node node) {
+        int nodeX = node.getX();
+        int nodeY = node.getY();
+        int nodeSize = NODE_SIZE;
+        return x >= nodeX - nodeSize / 2 && x <= nodeX + nodeSize / 2 && y >= nodeY - nodeSize / 2 && y <= nodeY + nodeSize / 2;
+    }
+
+    public boolean handleMouseClick(int mouseX, int mouseY, float offsetX, float offsetY, float scale) {
         // Пересчитываем координаты мыши с учетом смещения и масштаба
         float scaledX = (mouseX - offsetX) / scale;
         float scaledY = (mouseY - offsetY) / scale;
@@ -600,13 +594,26 @@ public class RecipeTreeWidget extends Gui {
                 continue;
             }
             if (isPointInNode(scaledX, scaledY, node)) {
-                setSelectedNode(node);
-                return;
+                return handleNodeClick(node);
             }
         }
 
         // Если клик не попал ни в один узел, сбрасываем выделение
         clearSelection();
+        return false;
+    }
+
+    private long lastClickTime;
+    private String lastClickedNodeId;
+    private static final long DOUBLE_CLICK_THRESHOLD_MS = 300L;
+
+    private boolean handleNodeClick(Node node) {
+        long now = System.currentTimeMillis();
+        boolean isDoubleClick = node.id.equals(lastClickedNodeId) && (now - lastClickTime) <= DOUBLE_CLICK_THRESHOLD_MS;
+        lastClickedNodeId = node.id;
+        lastClickTime = now;
+        setSelectedNode(node);
+        return isDoubleClick;
     }
 
     public void startDragging(int mouseX, int mouseY) {

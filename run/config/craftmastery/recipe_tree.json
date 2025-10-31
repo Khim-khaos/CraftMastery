@@ -17,30 +17,8 @@
       "displayName": "Акациевая лодка",
       "studyCost": 0,
       "position": {
-        "x": 0,
-        "y": 0
-      },
-      "availability": {
-        "mode": "always",
-        "requiredNodes": [],
-        "allowIndependentStudy": false
-      },
-      "unlocks": {
-        "nodes": [],
-        "tabs": [],
-        "permissions": []
-      },
-      "grantsCraftAccess": false
-    },
-    {
-      "id": "minecraft_acacia_wooden_slab",
-      "tab": "default",
-      "recipeId": "minecraft:acacia_wooden_slab",
-      "displayName": "Акациевая плита",
-      "studyCost": 0,
-      "position": {
-        "x": 0,
-        "y": 0
+        "x": 214,
+        "y": -30
       },
       "availability": {
         "mode": "always",
@@ -61,8 +39,30 @@
       "displayName": "Алмазная кирка",
       "studyCost": 0,
       "position": {
-        "x": 0,
-        "y": 0
+        "x": -53,
+        "y": -62
+      },
+      "availability": {
+        "mode": "always",
+        "requiredNodes": [],
+        "allowIndependentStudy": false
+      },
+      "unlocks": {
+        "nodes": [],
+        "tabs": [],
+        "permissions": []
+      },
+      "grantsCraftAccess": false
+    },
+    {
+      "id": "minecraft_acacia_wooden_slab",
+      "tab": "default",
+      "recipeId": "minecraft:acacia_wooden_slab",
+      "displayName": "Акациевая плита",
+      "studyCost": 0,
+      "position": {
+        "x": 70,
+        "y": 30
       },
       "availability": {
         "mode": "always",

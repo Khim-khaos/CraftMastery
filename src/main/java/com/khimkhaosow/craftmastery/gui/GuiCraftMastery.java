@@ -402,7 +402,7 @@ public class GuiCraftMastery extends GuiScreen implements GuiYesNoCallback {
                 openTreeEditor();
                 break;
             case ADMIN_MANAGE_TABS:
-                handleManageTabs();
+                openTabEditor();
                 break;
             case ADMIN_EXPERIENCE:
                 if (PermissionManager.getInstance().hasPermission(player, PermissionType.ADMIN_SETTINGS)) {
@@ -900,6 +900,10 @@ public class GuiCraftMastery extends GuiScreen implements GuiYesNoCallback {
 
     private boolean isEditorDragKeyDown() {
         return RecipeTreeEditorScreen.isEditorOpen() && org.lwjgl.input.Keyboard.isKeyDown(org.lwjgl.input.Keyboard.KEY_LSHIFT);
+    }
+
+    private void openTabEditor() {
+        Minecraft.getMinecraft().displayGuiScreen(new RecipeTreeTabEditorScreen(new RecipeTreeEditorScreen(this, player, recipeTree)));
     }
 
     @Override
