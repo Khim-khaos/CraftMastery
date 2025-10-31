@@ -607,23 +607,17 @@ src/main/java/com/khimkhaosow/craftmastery/
 │   ├── ConnectionRenderer.java    # Отрисовка связей между рецептами
 │   ├── ConnectionType.java        # Типы связей между узлами рецептов
 │   ├── CraftMasteryHUD.java       # Игровой интерфейс с информацией
-│   ├── GuiAdminSettingsScreen.java
 │   ├── GuiCraftMastery.java       # Главное окно мода
 │   ├── GuiExperience.java         # Окно системы опыта и уровней
 │   ├── GuiHandler.java            # Обработчик всех GUI элементов
-│   ├── GuiPlayerSettings.java
-│   ├── GuiRecipeBrowser.java
 │   ├── GuiRecipeDialog.java       # Диалог создания/редактирования рецепта
 │   ├── GuiRecipeSelector.java     # Окно выбора рецептов
 │   ├── GuiRecipeTree.java         # Визуализация дерева рецептов
 │   ├── NodeState.java             # Состояния узлов (изучен/доступен/заблокирован)
 │   ├── RecipeNode.java            # Базовый класс узла рецепта
-│   ├── GuiRecipeTreeEditorScreen.java
 │   ├── RecipeTreeFilterPanel.java # Панель фильтрации рецептов
 │   ├── RecipeTreeMinimap.java     # Миникарта дерева рецептов
-│   ├── RecipeTreeTabEditorScreen.java
-│   ├── RecipeTreeTabSelectionScreen.java
-│   └── TextureResourceBrowserScreen.java
+│   └── RecipeTreeWidget.java      # Основной виджет дерева рецептов
 │
 ├── integration/                # Интеграции с модами
 │   └── jei/

@@ -1,3 +1,4 @@
+// src/main/java/com/khimkhaosow/craftmastery/gui/widgets/TabBarWidget.java
 package com.khimkhaosow.craftmastery.gui.widgets;
 
 import com.khimkhaosow.craftmastery.config.RecipeTreeConfigManager;
@@ -83,17 +84,17 @@ public class TabBarWidget extends Gui {
     public void draw(int mouseX, int mouseY) {
         int localMouseY = mouseY - offsetY;
 
-        // Фон панели
-        drawRect(0, offsetY, width, offsetY + TAB_HEIGHT, 0xFF2F2F2F);
+        // Фон панели (необязательно, если рисуется в основном GUI)
+        // drawRect(0, offsetY, width, offsetY + TAB_HEIGHT, 0xFF2F2F2F);
 
-        // Фон активной вкладки
+        // Фон активной вкладки (теперь заполняет всю высоту вкладки)
         int activeTabX = getActiveTabX();
         if (activeTabX >= 0) {
             drawRect(activeTabX, offsetY, activeTabX + TAB_WIDTH, offsetY + TAB_HEIGHT, 0xFF4CAF50);
         }
 
-        // Тень под панелью
-        drawRect(0, offsetY + TAB_HEIGHT - 2, width, offsetY + TAB_HEIGHT, 0xFF1A1A1A);
+        // УБРАНА тень под панелью - это убирало "хвост"
+        // drawRect(0, offsetY + TAB_HEIGHT - 2, width, offsetY + TAB_HEIGHT, 0xFF1A1A1A);
 
         // Стрелки навигации и вкладки
         drawScrollArrows(mouseX, localMouseY);
@@ -139,18 +140,21 @@ public class TabBarWidget extends Gui {
             }
             int tabX = startX + (i - tabScrollOffset) * (TAB_WIDTH + TAB_SPACING);
             boolean isActive = tabId.equals(activeTabId);
+            // Исправлено: используем mouseY напрямую, так как isMouseOverTab теперь корректно проверяет координаты
             boolean isHovered = isMouseOverTab(mouseX, mouseY, tabX);
 
-            // Фон вкладки
-            int tabColor = isActive ? 0xFF4CAF50 : (isHovered ? 0x88555555 : 0x66555555);
-            drawRect(tabX, offsetY + 5, tabX + TAB_WIDTH, offsetY + TAB_HEIGHT - 5, tabColor);
+            // Фон вкладки (исправлено: заполняет всю высоту, hover непрозрачный)
+            // int tabColor = isActive ? 0xFF4CAF50 : (isHovered ? 0x88555555 : 0x66555555); // Старый hover цвет (полупрозрачный)
+            int tabColor = isActive ? 0xFF4CAF50 : (isHovered ? 0xFF555555 : 0xFF444444); // Новый hover цвет (непрозрачный)
+            // int tabColor = isActive ? 0xFF4CAF50 : (isHovered ? 0xFFAAAAAA : 0xFF888888); // Альтернативный hover цвет (светлее)
+            drawRect(tabX, offsetY, tabX + TAB_WIDTH, offsetY + TAB_HEIGHT, tabColor);
 
             // Значок и текст
             String icon = getTabIcon(tabData);
             int iconX = tabX + 10;
             int iconY = offsetY + TAB_HEIGHT / 2 - 4;
             int textColor = isActive ? 0xFF000000 : 0xFFFFFFFF;
-            
+
             drawString(fontRenderer, icon, iconX, iconY, textColor);
             String displayName = truncateTabName(tabData.title != null ? tabData.title : tabId);
             drawString(fontRenderer, displayName, iconX + 20, iconY, textColor);
@@ -186,7 +190,8 @@ public class TabBarWidget extends Gui {
         int startX = 40;
         for (int i = tabScrollOffset; i < tabOrder.size() && i < tabScrollOffset + getMaxVisibleTabs(); i++) {
             int tabX = startX + (i - tabScrollOffset) * (TAB_WIDTH + TAB_SPACING);
-            if (isMouseOverTab(mouseX, localMouseY, tabX)) {
+            // Исправлено: передаём глобальную mouseY в isMouseOverTab
+            if (isMouseOverTab(mouseX, mouseY, tabX)) {
                 String tabId = tabOrder.get(i);
                 if (!tabId.equals(activeTabId)) {
                     setActiveTab(tabId);
@@ -202,15 +207,19 @@ public class TabBarWidget extends Gui {
     }
 
     private boolean isMouseOverLeftArrow(int mouseX, int mouseY) {
-        return mouseX >= 10 && mouseX <= 30 && mouseY >= TAB_HEIGHT / 2 - 10 && mouseY <= TAB_HEIGHT / 2 + 10;
+        int localMouseY = mouseY - offsetY;
+        return mouseX >= 10 && mouseX <= 30 && localMouseY >= TAB_HEIGHT / 2 - 10 && localMouseY <= TAB_HEIGHT / 2 + 10;
     }
 
     private boolean isMouseOverRightArrow(int mouseX, int mouseY) {
-        return mouseX >= width - 30 && mouseX <= width - 10 && mouseY >= TAB_HEIGHT / 2 - 10 && mouseY <= TAB_HEIGHT / 2 + 10;
+        int localMouseY = mouseY - offsetY;
+        return mouseX >= width - 30 && mouseX <= width - 10 && localMouseY >= TAB_HEIGHT / 2 - 10 && localMouseY <= TAB_HEIGHT / 2 + 10;
     }
 
+    // Исправлено: проверка mouseY относительно offsetY
     private boolean isMouseOverTab(int mouseX, int mouseY, int tabX) {
-        return mouseX >= tabX && mouseX <= tabX + TAB_WIDTH && mouseY >= 5 && mouseY <= TAB_HEIGHT - 5;
+        return mouseX >= tabX && mouseX <= tabX + TAB_WIDTH
+                && mouseY >= offsetY + 5 && mouseY <= offsetY + TAB_HEIGHT - 5; // Было: mouseY >= 5 && mouseY <= TAB_HEIGHT - 5
     }
 
     private int getActiveTabX() {

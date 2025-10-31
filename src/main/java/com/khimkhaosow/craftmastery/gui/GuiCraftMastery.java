@@ -109,22 +109,44 @@ public class GuiCraftMastery extends GuiScreen implements GuiYesNoCallback {
         // Рассчитываем позиции и размеры элементов интерфейса
         calculateGuiDimensions();
 
-        // Инициализируем виджеты с новыми размерами
-        // TabBarWidget - верхняя панель
-        int tabBarY = 60;
+        // --- НОВАЯ ЛОГИКА РАЗМЕЩЕНИЯ TabBarWidget ---
+        int iconSize = 22; // из addCoreButtons
+        int topY = 12;     // из addCoreButtons
+        int topButtonBottom = topY + iconSize; // Где заканчиваются верхние кнопки
+
+        // Позиция вкладок - чуть ниже верхних кнопок
+        int tabBarY = topButtonBottom + 10; // Отступ 10 пикселей
+
+        // Высота вкладок из TabBarWidget
+        int tabBarHeight = TabBarWidget.getPreferredHeight(); // TAB_HEIGHT = 32
+
+        // Позиция нижней панели (из addCoreButtons)
+        int bottomPanelTop = height - bottomPanelHeight; // Где начинается нижняя панель (backButton)
+        int backButtonHeight = 20; // Высота кнопки "Назад"
+
+        // Проверяем, помещаются ли вкладки между верхними кнопками и нижней панелью
+        int availableSpace = bottomPanelTop - topButtonBottom;
+        if (availableSpace >= tabBarHeight) {
+            // Хватает места, размещаем вкладки между
+            // tabBarY уже рассчитан как чуть ниже верхних кнопок
+        } else {
+            // Не хватает места, размещаем вкладки ближе к верхним кнопкам
+            tabBarY = topButtonBottom + 2; // Минимальный отступ
+        }
+
+        // Убедимся, что вкладки не наезжают на кнопку "Назад"
+        if (tabBarY + tabBarHeight > bottomPanelTop - backButtonHeight - 5) { // 5 - отступ от кнопки
+            tabBarY = bottomPanelTop - backButtonHeight - tabBarHeight - 5;
+        }
+
+        // Создаем TabBarWidget с новой позицией
         this.tabBar = new TabBarWidget(Minecraft.getMinecraft(), player, width, tabBarY, this::handleTabSelection);
         this.tabBar.updateTabList();
+        // --- КОНЕЦ НОВОЙ ЛОГИКИ ---
 
-        // Панели очков и прогресса
         refreshExperienceWidgets();
-
-        // AdminPanelWidget - возможно, не нужен как отдельный элемент, или интегрировать в левую панель
-        // this.adminPanel = ... // Пока убираем
-
-        // Инициализируем кнопки для текущей страницы
         updateButtonsForPage();
 
-        // Поле поиска (инициализируется в updateButtonsForPage)
         if (currentPage == Page.SEARCH && searchField == null) {
             int centerX = width / 2;
             searchField = new GuiTextField(5, Minecraft.getMinecraft().fontRenderer, centerX - 100, topPanelHeight + 20, 200, 20);
@@ -736,10 +758,6 @@ public class GuiCraftMastery extends GuiScreen implements GuiYesNoCallback {
         // Рисуем стрелки навигации (если они есть) - они уже добавлены в buttonList
         // Их отрисовка происходит в drawScreen -> for (GuiButton button : buttonList)
     }
-
-    // --- Остальные методы draw...Page ---
-    // (Код этих методов остается прежним, но возможно, их позиции нужно будет пересмотреть)
-    // ... (копируем из старого кода с минимальными изменениями) ...
 
     private void drawTabsPage() {
         drawString(Minecraft.getMinecraft().fontRenderer, TextFormatting.GOLD + "Вкладки", 10, 25, 0xFFFFFF);
