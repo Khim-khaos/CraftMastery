@@ -25,3 +25,7 @@ replay_pid*
 /run
 /build/reports/problems
 /run
+/.zencoder
+/.idea
+/.qodo
+/.vscode
