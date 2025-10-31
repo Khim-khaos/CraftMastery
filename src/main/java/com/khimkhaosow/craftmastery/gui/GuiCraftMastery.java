@@ -809,27 +809,43 @@ public class GuiCraftMastery extends GuiScreen implements GuiYesNoCallback {
             if (eventButton == 0 && buttonState && insideTree) {
                 float relativeX = mouseX - (bookX + bookWidth / 2.0f);
                 float relativeY = mouseY - (bookY + bookHeight / 2.0f);
-                nodeDragActive = recipeTree.beginNodeDrag(relativeX, relativeY, offsetX, offsetY, scale);
-                if (!nodeDragActive) {
-                    recipeTree.startDragging(mouseX, mouseY);
-                    isDragging = true;
+
+                if (!recipeTree.handleEditorClick(relativeX, relativeY, offsetX, offsetY, scale, eventButton)) {
+                    nodeDragActive = recipeTree.beginNodeDrag(relativeX, relativeY, offsetX, offsetY, scale);
                 }
-            } else if (eventButton == 0 && !buttonState && isDragging) {
-                recipeTree.stopDragging();
-                isDragging = false;
-            } else if (eventButton == 0 && !buttonState && nodeDragActive) {
-                recipeTree.endNodeDrag(true);
-                nodeDragActive = false;
+            } else if (eventButton == 0 && !buttonState) {
+                if (recipeTree.isLinking()) {
+                    float relativeX = mouseX - (bookX + bookWidth / 2.0f);
+                    float relativeY = mouseY - (bookY + bookHeight / 2.0f);
+                    recipeTree.completeLink(relativeX, relativeY, offsetX, offsetY, scale);
+                } else if (nodeDragActive) {
+                    recipeTree.endNodeDrag(true);
+                    nodeDragActive = false;
+                }
             } else if (eventButton == -1 && Mouse.isButtonDown(0)) {
-                if (nodeDragActive) {
+                if (recipeTree.isLinking()) {
+                    float relativeX = mouseX - (bookX + bookWidth / 2.0f);
+                    float relativeY = mouseY - (bookY + bookHeight / 2.0f);
+                    recipeTree.updateLinkCursor(relativeX, relativeY, offsetX, offsetY, scale);
+                } else if (nodeDragActive) {
                     recipeTree.updateNodeDrag(mouseX - (bookX + bookWidth / 2.0f),
                             mouseY - (bookY + bookHeight / 2.0f), offsetX, offsetY, scale);
-                } else if (isDragging) {
-                    int[] delta = recipeTree.handleMouseDrag(mouseX, mouseY);
-                    if (delta != null) {
-                        offsetX += delta[0] / scale;
-                        offsetY += delta[1] / scale;
-                    }
+                }
+            } else if (eventButton == 2 && buttonState && insideTree) {
+                recipeTree.startDragging(mouseX, mouseY);
+                isDragging = true;
+            } else if (eventButton == 2 && !buttonState && isDragging) {
+                recipeTree.stopDragging();
+                isDragging = false;
+            } else if (eventButton == -1 && Mouse.isButtonDown(2) && isDragging) {
+                int[] delta = recipeTree.handleMouseDrag(mouseX, mouseY);
+                if (delta != null) {
+                    offsetX += delta[0] / scale;
+                    offsetY += delta[1] / scale;
+                }
+            } else if (eventButton == 1 && buttonState) {
+                if (recipeTree.isLinking()) {
+                    recipeTree.cancelLink();
                 }
             }
         }

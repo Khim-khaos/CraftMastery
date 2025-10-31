@@ -927,6 +927,7 @@ public class RecipeTreeWidget extends Gui {
         RecipeTreeEditorScreen editor = RecipeTreeEditorScreen.getActiveInstance();
         if (editor != null) {
             editor.refreshFromConfig(target.id);
+            editor.notifyLinkCreated(source.id, target.id);
         }
         return true;
     }

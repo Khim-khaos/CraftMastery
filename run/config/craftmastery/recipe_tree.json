@@ -15,36 +15,16 @@
       "tab": "default",
       "recipeId": "minecraft:acacia_boat",
       "displayName": "Акациевая лодка",
-      "studyCost": 0,
+      "studyCost": 30,
       "position": {
         "x": 214,
         "y": -30
       },
       "availability": {
         "mode": "always",
-        "requiredNodes": [],
-        "allowIndependentStudy": false
-      },
-      "unlocks": {
-        "nodes": [],
-        "tabs": [],
-        "permissions": []
-      },
-      "grantsCraftAccess": false
-    },
-    {
-      "id": "тест",
-      "tab": "default",
-      "recipeId": "minecraft:diamond_pickaxe",
-      "displayName": "Алмазная кирка",
-      "studyCost": 0,
-      "position": {
-        "x": -53,
-        "y": -62
-      },
-      "availability": {
-        "mode": "always",
-        "requiredNodes": [],
+        "requiredNodes": [
+          "minecraft_acacia_wooden_slab"
+        ],
         "allowIndependentStudy": false
       },
       "unlocks": {
@@ -59,10 +39,36 @@
       "tab": "default",
       "recipeId": "minecraft:acacia_wooden_slab",
       "displayName": "Акациевая плита",
-      "studyCost": 0,
+      "studyCost": 5,
       "position": {
         "x": 70,
         "y": 30
+      },
+      "availability": {
+        "mode": "always",
+        "requiredNodes": [
+          "тест"
+        ],
+        "allowIndependentStudy": false
+      },
+      "unlocks": {
+        "nodes": [
+          "minecraft_acacia_boat"
+        ],
+        "tabs": [],
+        "permissions": []
+      },
+      "grantsCraftAccess": false
+    },
+    {
+      "id": "тест",
+      "tab": "default",
+      "recipeId": "minecraft:diamond_pickaxe",
+      "displayName": "Алмазная кирка",
+      "studyCost": 80,
+      "position": {
+        "x": -53,
+        "y": -62
       },
       "availability": {
         "mode": "always",
@@ -70,7 +76,9 @@
         "allowIndependentStudy": false
       },
       "unlocks": {
-        "nodes": [],
+        "nodes": [
+          "minecraft_acacia_wooden_slab"
+        ],
         "tabs": [],
         "permissions": []
       },
