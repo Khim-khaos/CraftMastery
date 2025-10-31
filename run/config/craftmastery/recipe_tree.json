@@ -1,0 +1,80 @@
+{
+  "tabs": [
+    {
+      "id": "default",
+      "title": "Основная"
+    },
+    {
+      "id": "test",
+      "title": "Тест"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "minecraft_acacia_boat",
+      "tab": "default",
+      "recipeId": "minecraft:acacia_boat",
+      "displayName": "Акациевая лодка",
+      "studyCost": 0,
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "availability": {
+        "mode": "always",
+        "requiredNodes": [],
+        "allowIndependentStudy": false
+      },
+      "unlocks": {
+        "nodes": [],
+        "tabs": [],
+        "permissions": []
+      },
+      "grantsCraftAccess": false
+    },
+    {
+      "id": "minecraft_acacia_wooden_slab",
+      "tab": "default",
+      "recipeId": "minecraft:acacia_wooden_slab",
+      "displayName": "Акациевая плита",
+      "studyCost": 0,
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "availability": {
+        "mode": "always",
+        "requiredNodes": [],
+        "allowIndependentStudy": false
+      },
+      "unlocks": {
+        "nodes": [],
+        "tabs": [],
+        "permissions": []
+      },
+      "grantsCraftAccess": false
+    },
+    {
+      "id": "тест",
+      "tab": "default",
+      "recipeId": "minecraft:diamond_pickaxe",
+      "displayName": "Алмазная кирка",
+      "studyCost": 0,
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "availability": {
+        "mode": "always",
+        "requiredNodes": [],
+        "allowIndependentStudy": false
+      },
+      "unlocks": {
+        "nodes": [],
+        "tabs": [],
+        "permissions": []
+      },
+      "grantsCraftAccess": false
+    }
+  ]
+}
