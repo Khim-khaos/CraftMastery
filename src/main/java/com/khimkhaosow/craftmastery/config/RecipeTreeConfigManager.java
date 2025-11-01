@@ -201,6 +201,39 @@ public class RecipeTreeConfigManager {
         }
         target.tabs.removeIf(Objects::isNull);
         target.nodes.removeIf(Objects::isNull);
+
+        for (TabData tab : target.tabs) {
+            if (tab == null) {
+                continue;
+            }
+            if (tab.requiredNodes == null) {
+                tab.requiredNodes = new ArrayList<>();
+            }
+            if (tab.requiredTabs == null) {
+                tab.requiredTabs = new ArrayList<>();
+            }
+            if (tab.requiredPermissions == null) {
+                tab.requiredPermissions = new ArrayList<>();
+            }
+        }
+
+        for (NodeData node : target.nodes) {
+            if (node == null) {
+                continue;
+            }
+            if (node.unlocks == null) {
+                node.unlocks = new Unlocks();
+            }
+            if (node.unlocks.nodes == null) {
+                node.unlocks.nodes = new ArrayList<>();
+            }
+            if (node.unlocks.tabs == null) {
+                node.unlocks.tabs = new ArrayList<>();
+            }
+            if (node.unlocks.permissions == null) {
+                node.unlocks.permissions = new ArrayList<>();
+            }
+        }
     }
 
     private TreeConfig createDefaultConfig() {
@@ -218,6 +251,9 @@ public class RecipeTreeConfigManager {
         public String id;
         public String title;
         public String icon;
+        public List<String> requiredTabs = new ArrayList<>();
+        public List<String> requiredNodes = new ArrayList<>();
+        public List<String> requiredPermissions = new ArrayList<>();
 
         public static TabData defaultTab() {
             TabData tab = new TabData();

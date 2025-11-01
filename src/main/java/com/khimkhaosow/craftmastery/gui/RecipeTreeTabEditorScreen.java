@@ -40,6 +40,9 @@ public class RecipeTreeTabEditorScreen extends GuiScreen {
     private GuiTextField idField;
     private GuiTextField titleField;
     private GuiTextField iconField;
+    private GuiTextField requiredTabsField;
+    private GuiTextField requiredNodesField;
+    private GuiTextField requiredPermissionsField;
 
     private TabList tabList;
 
@@ -65,6 +68,12 @@ public class RecipeTreeTabEditorScreen extends GuiScreen {
         titleField = createField(y, "");
         y += FIELD_GAP;
         iconField = createField(y, "");
+        y += FIELD_GAP;
+        requiredTabsField = createField(y, "");
+        y += FIELD_GAP;
+        requiredNodesField = createField(y, "");
+        y += FIELD_GAP;
+        requiredPermissionsField = createField(y, "");
 
         int btnY = height - 40;
         int btnWidth = 80;
@@ -97,6 +106,9 @@ public class RecipeTreeTabEditorScreen extends GuiScreen {
         idField.updateCursorCounter();
         titleField.updateCursorCounter();
         iconField.updateCursorCounter();
+        requiredTabsField.updateCursorCounter();
+        requiredNodesField.updateCursorCounter();
+        requiredPermissionsField.updateCursorCounter();
         if (statusMessage != null && mc.world != null && mc.world.getTotalWorldTime() - statusTicks > 200) {
             statusMessage = null;
         }
@@ -107,6 +119,9 @@ public class RecipeTreeTabEditorScreen extends GuiScreen {
         if (idField.textboxKeyTyped(typedChar, keyCode)) return;
         if (titleField.textboxKeyTyped(typedChar, keyCode)) return;
         if (iconField.textboxKeyTyped(typedChar, keyCode)) return;
+        if (requiredTabsField.textboxKeyTyped(typedChar, keyCode)) return;
+        if (requiredNodesField.textboxKeyTyped(typedChar, keyCode)) return;
+        if (requiredPermissionsField.textboxKeyTyped(typedChar, keyCode)) return;
         super.keyTyped(typedChar, keyCode);
     }
 
@@ -116,6 +131,9 @@ public class RecipeTreeTabEditorScreen extends GuiScreen {
         idField.mouseClicked(mouseX, mouseY, mouseButton);
         titleField.mouseClicked(mouseX, mouseY, mouseButton);
         iconField.mouseClicked(mouseX, mouseY, mouseButton);
+        requiredTabsField.mouseClicked(mouseX, mouseY, mouseButton);
+        requiredNodesField.mouseClicked(mouseX, mouseY, mouseButton);
+        requiredPermissionsField.mouseClicked(mouseX, mouseY, mouseButton);
     }
 
     @Override
@@ -151,6 +169,9 @@ public class RecipeTreeTabEditorScreen extends GuiScreen {
         editingTab.id = "";
         editingTab.title = "";
         editingTab.icon = "";
+        editingTab.requiredTabs = new ArrayList<>();
+        editingTab.requiredNodes = new ArrayList<>();
+        editingTab.requiredPermissions = new ArrayList<>();
         selectedTabId = null;
         loadTabToForm(editingTab);
         idField.setFocused(true);
@@ -216,6 +237,9 @@ public class RecipeTreeTabEditorScreen extends GuiScreen {
         tab.id = id;
         tab.title = title;
         tab.icon = icon.isEmpty() ? null : icon;
+        tab.requiredTabs = parseList(requiredTabsField.getText());
+        tab.requiredNodes = parseList(requiredNodesField.getText());
+        tab.requiredPermissions = parseList(requiredPermissionsField.getText());
         return tab;
     }
 
@@ -246,6 +270,9 @@ public class RecipeTreeTabEditorScreen extends GuiScreen {
         idField.setText(tab.id != null ? tab.id : "");
         titleField.setText(tab.title != null ? tab.title : "");
         iconField.setText(tab.icon != null ? tab.icon : "");
+        requiredTabsField.setText(joinList(tab.requiredTabs));
+        requiredNodesField.setText(joinList(tab.requiredNodes));
+        requiredPermissionsField.setText(joinList(tab.requiredPermissions));
     }
 
     private TabData copyTab(TabData original) {
@@ -253,6 +280,9 @@ public class RecipeTreeTabEditorScreen extends GuiScreen {
         copy.id = original.id;
         copy.title = original.title;
         copy.icon = original.icon;
+        copy.requiredTabs = original.requiredTabs == null ? new ArrayList<>() : new ArrayList<>(original.requiredTabs);
+        copy.requiredNodes = original.requiredNodes == null ? new ArrayList<>() : new ArrayList<>(original.requiredNodes);
+        copy.requiredPermissions = original.requiredPermissions == null ? new ArrayList<>() : new ArrayList<>(original.requiredPermissions);
         return copy;
     }
 
@@ -274,9 +304,14 @@ public class RecipeTreeTabEditorScreen extends GuiScreen {
         drawLabeledField(40, "ID", idField);
         drawLabeledField(40 + FIELD_GAP, "Название", titleField);
         drawLabeledField(40 + FIELD_GAP * 2, "Иконка (resource)", iconField);
+        drawLabeledField(40 + FIELD_GAP * 3, "Требуемые вкладки", requiredTabsField);
+        drawLabeledField(40 + FIELD_GAP * 4, "Требуемые узлы", requiredNodesField);
+        drawLabeledField(40 + FIELD_GAP * 5, "Требуемые права", requiredPermissionsField);
 
-        drawString(fontRenderer, TextFormatting.GRAY + "Пример: modid:textures/gui/icon.png", FORM_LEFT, 40 + FIELD_GAP * 3 + 6, 0xFFFFFF);
-        drawString(fontRenderer, TextFormatting.GRAY + "Можно оставить пустым или указать Unicode-символ", FORM_LEFT, 40 + FIELD_GAP * 3 + 18, 0xFFFFFF);
+        int hintBaseY = 40 + FIELD_GAP * 6 + 6;
+        drawString(fontRenderer, TextFormatting.GRAY + "Пример: modid:textures/gui/icon.png", FORM_LEFT, hintBaseY, 0xFFFFFF);
+        drawString(fontRenderer, TextFormatting.GRAY + "Можно оставить пустым или указать Unicode-символ", FORM_LEFT, hintBaseY + 12, 0xFFFFFF);
+        drawString(fontRenderer, TextFormatting.GRAY + "Списки требований: ID через запятую", FORM_LEFT, hintBaseY + 30, 0xFFFFFF);
 
         if (statusMessage != null) {
             drawCenteredString(fontRenderer, statusMessage, width / 2, height - 60, statusColor);
@@ -343,5 +378,26 @@ public class RecipeTreeTabEditorScreen extends GuiScreen {
         protected int getScrollBarX() {
             return this.right - 6;
         }
+    }
+
+    private static List<String> parseList(String raw) {
+        List<String> result = new ArrayList<>();
+        if (raw == null) {
+            return result;
+        }
+        for (String token : raw.split(",")) {
+            String trimmed = token.trim();
+            if (!trimmed.isEmpty()) {
+                result.add(trimmed);
+            }
+        }
+        return result;
+    }
+
+    private static String joinList(List<String> values) {
+        if (values == null || values.isEmpty()) {
+            return "";
+        }
+        return String.join(", ", values);
     }
 }

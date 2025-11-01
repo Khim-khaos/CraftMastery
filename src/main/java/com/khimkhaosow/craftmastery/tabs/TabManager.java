@@ -8,6 +8,8 @@ import java.util.Set;
 import java.util.UUID;
 
 import com.khimkhaosow.craftmastery.CraftMastery;
+import com.khimkhaosow.craftmastery.config.RecipeTreeConfigManager;
+import com.khimkhaosow.craftmastery.config.RecipeTreeConfigManager.TabData;
 import com.khimkhaosow.craftmastery.experience.ExperienceManager;
 import com.khimkhaosow.craftmastery.experience.PlayerExperienceData;
 import com.khimkhaosow.craftmastery.permissions.PermissionManager;
@@ -111,12 +113,19 @@ public class TabManager {
     public List<Tab> getAvailableTabs(EntityPlayer player) {
         List<Tab> available = new ArrayList<>();
 
+        RecipeTreeConfigManager config = RecipeTreeConfigManager.getInstance();
+
         for (Tab tab : tabs.values()) {
             // Проверяем права доступа
             if (tab.requiresPermission()) {
                 if (!PermissionManager.getInstance().hasPermission(player, PermissionType.OPEN_INTERFACE)) {
                     continue;
                 }
+            }
+
+            TabData configTab = config.getTab(tab.getId()).orElse(null);
+            if (configTab != null && !TabAvailabilityHelper.isTabUnlocked(player, configTab)) {
+                continue;
             }
 
             available.add(tab);
@@ -154,6 +163,11 @@ public class TabManager {
 
         // Проверяем права
         if (!PermissionManager.getInstance().hasPermission(player, PermissionType.LEARN_RECIPES)) {
+            return false;
+        }
+
+        TabData configTab = RecipeTreeConfigManager.getInstance().getTab(tabId).orElse(null);
+        if (configTab != null && !TabAvailabilityHelper.isTabUnlocked(player, configTab)) {
             return false;
         }
 
@@ -209,6 +223,20 @@ public class TabManager {
 
         CraftMastery.logger.info("Player {} reset tab {}", player.getName(), tab.getName());
         return true;
+    }
+
+    public void unlockTabForPlayer(EntityPlayer player, String tabId) {
+        if (player == null || tabId == null || tabId.trim().isEmpty()) {
+            return;
+        }
+
+        Tab tab = getTab(tabId);
+        if (tab == null) {
+            return;
+        }
+
+        tab.forceStudyForPlayer(player.getUniqueID());
+        CraftMastery.logger.info("Player {} unlocked tab {} via node unlock", player.getName(), tab.getName());
     }
 
     /**

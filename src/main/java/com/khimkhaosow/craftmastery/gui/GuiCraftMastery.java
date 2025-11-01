@@ -9,6 +9,8 @@ import com.khimkhaosow.craftmastery.experience.PlayerExperienceData;
 import com.khimkhaosow.craftmastery.experience.PointsType;
 import com.khimkhaosow.craftmastery.permissions.PermissionManager;
 import com.khimkhaosow.craftmastery.permissions.PermissionType;
+
+import java.util.Locale;
 import com.khimkhaosow.craftmastery.recipe.RecipeEntry;
 import com.khimkhaosow.craftmastery.recipe.RecipeManager;
 import com.khimkhaosow.craftmastery.recipe.RecipeTag;
@@ -488,31 +490,27 @@ public class GuiCraftMastery extends GuiScreen implements GuiYesNoCallback {
     }
 
     private void handleTabSelection(String tabId) {
-        if (tabId == null || tabId.isEmpty()) {
-            currentPage = Page.MAIN;
-        } else {
-            switch (tabId.toLowerCase()) {
-                case "main":
-                case "default":
-                    currentPage = Page.MAIN;
-                    break;
-                case "settings":
-                    currentPage = Page.SETTINGS;
-                    break;
-                case "search":
-                    currentPage = Page.SEARCH;
-                    break;
-                default:
-                    currentPage = Page.TABS;
-                    break;
+        Page targetPage = Page.MAIN;
+        if (tabId != null) {
+            String normalized = tabId.trim().toLowerCase(Locale.ROOT);
+            if (normalized.isEmpty() || "main".equals(normalized) || "default".equals(normalized)) {
+                targetPage = Page.MAIN;
+            } else if ("settings".equals(normalized)) {
+                targetPage = Page.SETTINGS;
+            } else if ("search".equals(normalized)) {
+                targetPage = Page.SEARCH;
             }
+        }
+
+        if (currentPage != targetPage) {
+            currentPage = targetPage;
+            updateButtonsForPage();
         }
 
         if (recipeTree != null) {
             recipeTree.setActiveTab(tabId);
+            recipeTree.refresh();
         }
-
-        updateButtonsForPage();
     }
     private void handleTabAction(com.khimkhaosow.craftmastery.tabs.Tab tab) {
         if (tab.isStudiedByPlayer(player.getUniqueID())) {
