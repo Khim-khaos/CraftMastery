@@ -55,6 +55,8 @@ public class GuiCraftMastery extends GuiScreen implements GuiYesNoCallback {
     private TabBarWidget tabBar;
     private int topButtonsLeftBlockRight = 40;
     private int topButtonsRightBlockLeft = 0;
+    private int topButtonsRowY = 12;
+    private int topButtonsRowHeight = 22;
     private PointsPanelWidget pointsPanel;
     private LevelProgressWidget levelProgress;
 
@@ -936,6 +938,8 @@ public class GuiCraftMastery extends GuiScreen implements GuiYesNoCallback {
         GuiButton adminSettingsButton = new IconButton(11, settingsGearButton.x + iconSize + spacing, topY, iconSize, iconSize, "\u26A0", BUTTON_TEXTURE_ADMIN, 96, 96);
         buttonList.add(adminSettingsButton);
         topButtonsLeftBlockRight = adminSettingsButton.x + adminSettingsButton.width + spacing;
+        topButtonsRowY = topY;
+        topButtonsRowHeight = iconSize;
 
         backButton = new GuiButton(12, 10, height - bottomPanelHeight - 28, 60, 20, "Назад");
         buttonList.add(backButton);
@@ -945,11 +949,15 @@ public class GuiCraftMastery extends GuiScreen implements GuiYesNoCallback {
         addRecipeButton = new IconButton(13, rightBlockX, topY - 1, plusSize, plusSize, "+", BUTTON_TEXTURE_SELECTOR, 256, 200);
         buttonList.add(addRecipeButton);
         topButtonsRightBlockLeft = addRecipeButton.x;
+        topButtonsRowY = Math.min(topButtonsRowY, addRecipeButton.y);
+        topButtonsRowHeight = Math.max(topButtonsRowHeight, addRecipeButton.height);
 
         if (PermissionManager.getInstance().hasPermission(player, PermissionType.MANAGE_TABS)) {
             GuiButton manageTabsButton = new IconButton(14, addRecipeButton.x - plusSize - spacing, topY - 1, plusSize, plusSize, "T", BUTTON_TEXTURE_SELECTOR, 256, 200);
             buttonList.add(manageTabsButton);
             topButtonsRightBlockLeft = manageTabsButton.x;
+            topButtonsRowY = Math.min(topButtonsRowY, manageTabsButton.y);
+            topButtonsRowHeight = Math.max(topButtonsRowHeight, manageTabsButton.height);
         }
         topButtonsRightBlockLeft -= spacing;
     }
@@ -994,7 +1002,8 @@ public class GuiCraftMastery extends GuiScreen implements GuiYesNoCallback {
         if (tabBar == null) {
             return;
         }
-        int barTop = topPanelHeight + 6;
+        int desiredTop = topButtonsRowY + (topButtonsRowHeight - TabBarWidget.getPreferredHeight()) / 2;
+        int barTop = Math.max(6, desiredTop);
         int availableLeft = Math.max(10, topButtonsLeftBlockRight);
         int availableRight = topButtonsRightBlockLeft > 0 ? topButtonsRightBlockLeft : width - 10;
         int availableWidth = availableRight - availableLeft;

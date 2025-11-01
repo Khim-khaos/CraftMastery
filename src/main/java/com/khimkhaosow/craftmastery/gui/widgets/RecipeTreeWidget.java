@@ -812,6 +812,7 @@ public class RecipeTreeWidget extends Gui {
             clearSelection();
             return;
         }
+
         Node node = nodes.get(nodeId);
         if (node != null) {
             setSelectedNode(node);

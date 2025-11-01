@@ -28,6 +28,10 @@ public class TabBarWidget extends Gui {
     private static final int ICON_SIZE = 16;
     private static final int ICON_TEXT_PADDING = 6;
     private static final int MIN_WIDTH = TAB_WIDTH + (ARROW_WIDTH + TAB_SPACING) * 2;
+    private static final int TAB_TEXTURE_SEGMENT_WIDTH = 64;
+    private static final int TAB_TEXTURE_HEIGHT = 32;
+    private static final int TAB_TEXTURE_TOTAL_WIDTH = 256;
+    private static final ResourceLocation TAB_TEXTURE = new ResourceLocation("craftmastery", "textures/gui/tabs.png");
     private static final ResourceLocation DEFAULT_TAB_ICON = new ResourceLocation("craftmastery", "textures/gui/default_tab_icon.png");
 
     private final Minecraft minecraft;
@@ -107,8 +111,6 @@ public class TabBarWidget extends Gui {
         if (barWidth <= 0) {
             return;
         }
-        int localMouseY = mouseY - offsetY;
-
         // Основание панелі вкладок
         drawRect(originX, offsetY + TAB_HEIGHT - 2, originX + barWidth, offsetY + TAB_HEIGHT, 0xAA1F1F1F);
 
@@ -118,30 +120,38 @@ public class TabBarWidget extends Gui {
             drawRect(activeTabX, offsetY, right, offsetY + TAB_HEIGHT - 2, 0xFF4CAF50);
         }
 
-        drawScrollArrows(mouseX, localMouseY);
-        drawTabs(mouseX, localMouseY);
+        drawScrollArrows(mouseX, mouseY);
+        drawTabs(mouseX, mouseY);
     }
 
     private void drawScrollArrows(int mouseX, int mouseY) {
         // Левая стрелка
         boolean canScrollLeft = canScrollLeft();
         boolean hoverLeft = isMouseOverLeftArrow(mouseX, mouseY);
-        int arrowColor = canScrollLeft ? (hoverLeft ? 0xFF666666 : 0xFF555555) : 0xFF333333;
-        int textColor = canScrollLeft ? 0xFFFFFF : 0x888888;
-
+        int textColor = canScrollLeft ? 0xFFFFFF : 0x88CCCCCC;
         int arrowLeft = originX;
         int arrowTop = offsetY + TAB_HEIGHT / 2 - 10;
-        drawRect(arrowLeft, arrowTop, arrowLeft + ARROW_WIDTH, arrowTop + 20, arrowColor);
+        GlStateManager.color(1F, 1F, 1F, 1F);
+        minecraft.getTextureManager().bindTexture(TAB_TEXTURE);
+        drawScaledCustomSizeModalRect(arrowLeft, arrowTop, getArrowStateU(canScrollLeft, hoverLeft), 0,
+                TAB_TEXTURE_SEGMENT_WIDTH, TAB_TEXTURE_HEIGHT, ARROW_WIDTH, 20, TAB_TEXTURE_TOTAL_WIDTH, TAB_TEXTURE_HEIGHT);
+        if (!canScrollLeft) {
+            drawRect(arrowLeft, arrowTop, arrowLeft + ARROW_WIDTH, arrowTop + 20, 0x44000000);
+        }
         drawCenteredString(fontRenderer, "\u2039", arrowLeft + ARROW_WIDTH / 2, offsetY + TAB_HEIGHT / 2 - 4, textColor);
 
         // Правая стрелка
         boolean canScrollRight = canScrollRight();
         boolean hoverRight = isMouseOverRightArrow(mouseX, mouseY);
-        arrowColor = canScrollRight ? (hoverRight ? 0xFF666666 : 0xFF555555) : 0xFF333333;
-        textColor = canScrollRight ? 0xFFFFFF : 0x888888;
+        textColor = canScrollRight ? 0xFFFFFF : 0x88CCCCCC;
 
         int rightArrowLeft = originX + barWidth - ARROW_WIDTH;
-        drawRect(rightArrowLeft, arrowTop, rightArrowLeft + ARROW_WIDTH, arrowTop + 20, arrowColor);
+        minecraft.getTextureManager().bindTexture(TAB_TEXTURE);
+        drawScaledCustomSizeModalRect(rightArrowLeft, arrowTop, getArrowStateU(canScrollRight, hoverRight), 0,
+                TAB_TEXTURE_SEGMENT_WIDTH, TAB_TEXTURE_HEIGHT, ARROW_WIDTH, 20, TAB_TEXTURE_TOTAL_WIDTH, TAB_TEXTURE_HEIGHT);
+        if (!canScrollRight) {
+            drawRect(rightArrowLeft, arrowTop, rightArrowLeft + ARROW_WIDTH, arrowTop + 20, 0x44000000);
+        }
         drawCenteredString(fontRenderer, "\u203A", rightArrowLeft + ARROW_WIDTH / 2, offsetY + TAB_HEIGHT / 2 - 4, textColor);
     }
 
@@ -163,8 +173,11 @@ public class TabBarWidget extends Gui {
             boolean isActive = tabId.equals(activeTabId);
             boolean isHovered = isMouseOverTab(mouseX, mouseY, tabX);
 
-            int tabColor = isActive ? 0xFF4CAF50 : (isHovered ? 0xFF5A5A5A : 0xFF3C3C3C);
-            drawRect(tabX, offsetY, tabX + TAB_WIDTH, offsetY + TAB_HEIGHT - 2, tabColor);
+            GlStateManager.color(1F, 1F, 1F, 1F);
+            minecraft.getTextureManager().bindTexture(TAB_TEXTURE);
+            float stateU = getTabStateU(isActive, isHovered);
+            drawScaledCustomSizeModalRect(tabX, offsetY, stateU, 0, TAB_TEXTURE_SEGMENT_WIDTH, TAB_TEXTURE_HEIGHT,
+                    TAB_WIDTH, TAB_HEIGHT, TAB_TEXTURE_TOTAL_WIDTH, TAB_TEXTURE_HEIGHT);
 
             ResourceLocation iconLocation = resolveIcon(tabData);
             int iconX = tabX + 6;
@@ -204,12 +217,12 @@ public class TabBarWidget extends Gui {
             return false;
         }
 
-        if (isMouseOverLeftArrow(mouseX, localMouseY) && canScrollLeft()) {
+        if (isMouseOverLeftArrow(mouseX, mouseY) && canScrollLeft()) {
             tabScrollOffset--;
             return true;
         }
 
-        if (isMouseOverRightArrow(mouseX, localMouseY) && canScrollRight()) {
+        if (isMouseOverRightArrow(mouseX, mouseY) && canScrollRight()) {
             tabScrollOffset++;
             return true;
         }
@@ -248,7 +261,7 @@ public class TabBarWidget extends Gui {
     // Исправлено: проверка mouseY относительно offsetY
     private boolean isMouseOverTab(int mouseX, int mouseY, int tabX) {
         return mouseX >= tabX && mouseX <= tabX + TAB_WIDTH
-                && mouseY >= offsetY + 5 && mouseY <= offsetY + TAB_HEIGHT - 5; // Было: mouseY >= 5 && mouseY <= TAB_HEIGHT - 5
+                && mouseY >= offsetY && mouseY <= offsetY + TAB_HEIGHT;
     }
 
     private int getActiveTabX() {
@@ -315,6 +328,14 @@ public class TabBarWidget extends Gui {
         return Math.max(1, usableWidth / (TAB_WIDTH + TAB_SPACING));
     }
 
+    private boolean canScrollLeft() {
+        return tabScrollOffset > 0;
+    }
+
+    private boolean canScrollRight() {
+        return tabScrollOffset < Math.max(0, tabOrder.size() - getMaxVisibleTabs());
+    }
+
     public void setActiveTab(String tabId) {
         if (tabId != null && tabsById.containsKey(tabId)) {
             activeTabId = tabId;
@@ -355,5 +376,25 @@ public class TabBarWidget extends Gui {
             }
         }
         return DEFAULT_TAB_ICON;
+    }
+
+    private float getTabStateU(boolean isActive, boolean isHovered) {
+        if (isActive) {
+            return TAB_TEXTURE_SEGMENT_WIDTH * 2F;
+        }
+        if (isHovered) {
+            return TAB_TEXTURE_SEGMENT_WIDTH;
+        }
+        return 0F;
+    }
+
+    private float getArrowStateU(boolean enabled, boolean hovered) {
+        if (!enabled) {
+            return TAB_TEXTURE_SEGMENT_WIDTH * 3F;
+        }
+        if (hovered) {
+            return TAB_TEXTURE_SEGMENT_WIDTH;
+        }
+        return 0F;
     }
 }

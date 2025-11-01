@@ -103,6 +103,10 @@ public class RecipeTreeEditorScreen extends GuiScreen {
     private GuiTextField creationCostField;
     private GuiButton creationConfirmButton;
     private GuiButton creationCancelButton;
+    private int creationDialogLeft;
+    private int creationDialogTop;
+    private static final int CREATION_DIALOG_WIDTH = 240;
+    private static final int CREATION_DIALOG_HEIGHT = 150;
 
     public RecipeTreeEditorScreen(GuiCraftMastery parent, EntityPlayer player, RecipeTreeWidget treeWidget) {
         this.parent = Objects.requireNonNull(parent, "parent");
@@ -1040,21 +1044,27 @@ public class RecipeTreeEditorScreen extends GuiScreen {
 
     private void openCreationDialog() {
         creationDialogVisible = true;
-        int dialogWidth = 220;
-        int dialogHeight = 130;
         int centerX = width / 2;
         int centerY = height / 2;
-        creationIdField = new GuiTextField(600, fontRenderer, centerX - dialogWidth / 2 + 12, centerY - 30, dialogWidth - 24, 18);
+
+        creationDialogLeft = centerX - CREATION_DIALOG_WIDTH / 2;
+        creationDialogTop = centerY - CREATION_DIALOG_HEIGHT / 2;
+
+        creationIdField = new GuiTextField(600, fontRenderer, creationDialogLeft + 12, creationDialogTop + 28,
+                CREATION_DIALOG_WIDTH - 24, 18);
         creationIdField.setMaxStringLength(64);
         creationIdField.setText(idField.getText());
         creationIdField.setFocused(true);
 
-        creationCostField = new GuiTextField(601, fontRenderer, centerX - dialogWidth / 2 + 12, centerY + 4, dialogWidth - 24, 18);
+        creationCostField = new GuiTextField(601, fontRenderer, creationDialogLeft + 12, creationDialogTop + 72,
+                CREATION_DIALOG_WIDTH - 24, 18);
         creationCostField.setMaxStringLength(6);
         creationCostField.setText(costField.getText());
 
-        creationConfirmButton = new GuiButton(602, centerX - 90, centerY + 40, 80, 20, "Создать");
-        creationCancelButton = new GuiButton(603, centerX + 10, centerY + 40, 80, 20, "Отмена");
+        int buttonWidth = 100;
+        int buttonY = creationDialogTop + CREATION_DIALOG_HEIGHT - 30;
+        creationConfirmButton = new GuiButton(602, creationDialogLeft + 12, buttonY, buttonWidth, 20, "Создать");
+        creationCancelButton = new GuiButton(603, creationDialogLeft + CREATION_DIALOG_WIDTH - 12 - buttonWidth, buttonY, buttonWidth, 20, "Отмена");
     }
 
     private void closeCreationDialog() {
