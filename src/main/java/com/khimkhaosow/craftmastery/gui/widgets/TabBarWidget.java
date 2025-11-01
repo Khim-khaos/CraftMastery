@@ -1,4 +1,3 @@
-// src/main/java/com/khimkhaosow/craftmastery/gui/widgets/TabBarWidget.java
 package com.khimkhaosow.craftmastery.gui.widgets;
 
 import com.khimkhaosow.craftmastery.config.RecipeTreeConfigManager;
@@ -9,6 +8,7 @@ import com.khimkhaosow.craftmastery.recipe.RecipeManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.Gui;
+import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.ResourceLocation;
 
@@ -21,17 +21,21 @@ import java.util.Map;
  * Виджет верхней панели с вкладками
  */
 public class TabBarWidget extends Gui {
-    private static final ResourceLocation TAB_TEXTURES = new ResourceLocation("craftmastery", "textures/gui/tabs.png");
-    private static final int TAB_HEIGHT = 32;
+    private static final int TAB_HEIGHT = 28;
     private static final int TAB_WIDTH = 120;
     private static final int ARROW_WIDTH = 20;
     private static final int TAB_SPACING = 5;
+    private static final int ICON_SIZE = 16;
+    private static final int ICON_TEXT_PADDING = 6;
+    private static final int MIN_WIDTH = TAB_WIDTH + (ARROW_WIDTH + TAB_SPACING) * 2;
+    private static final ResourceLocation DEFAULT_TAB_ICON = new ResourceLocation("craftmastery", "textures/gui/default_tab_icon.png");
 
     private final Minecraft minecraft;
     private final EntityPlayer player;
     private final FontRenderer fontRenderer;
-    private final int width;
-    private final int offsetY;
+    private int originX;
+    private int barWidth;
+    private int offsetY;
     private int tabScrollOffset = 0;
     private String activeTabId;
     private final Map<String, TabData> tabsById = new LinkedHashMap<>();
@@ -51,14 +55,31 @@ public class TabBarWidget extends Gui {
 
     private final TabSelectedCallback callback;
 
-    public TabBarWidget(Minecraft minecraft, EntityPlayer player, int width, int offsetY, TabSelectedCallback callback) {
+    public TabBarWidget(Minecraft minecraft, EntityPlayer player, int originX, int width, int offsetY, TabSelectedCallback callback) {
         this.minecraft = minecraft;
         this.player = player;
         this.fontRenderer = minecraft.fontRenderer;
-        this.width = width;
-        this.offsetY = offsetY;
         this.callback = callback;
+        setLayout(originX, width, offsetY);
         updateTabList();
+    }
+
+    public void setLayout(int originX, int width, int offsetY) {
+        this.originX = Math.max(0, originX);
+        this.barWidth = Math.max(width, MIN_WIDTH);
+        this.offsetY = offsetY;
+        clampTabScrollOffset();
+    }
+
+    private void clampTabScrollOffset() {
+        int maxVisible = Math.max(1, getMaxVisibleTabs());
+        int maxOffset = Math.max(0, tabOrder.size() - maxVisible);
+        if (tabScrollOffset > maxOffset) {
+            tabScrollOffset = maxOffset;
+        }
+        if (tabScrollOffset < 0) {
+            tabScrollOffset = 0;
+        }
     }
 
     public void updateTabList() {
@@ -79,24 +100,24 @@ public class TabBarWidget extends Gui {
         } else if (activeTabId != null && !tabsById.containsKey(activeTabId)) {
             activeTabId = tabOrder.isEmpty() ? null : tabOrder.get(0);
         }
+        clampTabScrollOffset();
     }
 
     public void draw(int mouseX, int mouseY) {
+        if (barWidth <= 0) {
+            return;
+        }
         int localMouseY = mouseY - offsetY;
 
-        // Фон панели (необязательно, если рисуется в основном GUI)
-        // drawRect(0, offsetY, width, offsetY + TAB_HEIGHT, 0xFF2F2F2F);
+        // Основание панелі вкладок
+        drawRect(originX, offsetY + TAB_HEIGHT - 2, originX + barWidth, offsetY + TAB_HEIGHT, 0xAA1F1F1F);
 
-        // Фон активной вкладки (теперь заполняет всю высоту вкладки)
         int activeTabX = getActiveTabX();
         if (activeTabX >= 0) {
-            drawRect(activeTabX, offsetY, activeTabX + TAB_WIDTH, offsetY + TAB_HEIGHT, 0xFF4CAF50);
+            int right = Math.min(activeTabX + TAB_WIDTH, originX + barWidth - ARROW_WIDTH - TAB_SPACING);
+            drawRect(activeTabX, offsetY, right, offsetY + TAB_HEIGHT - 2, 0xFF4CAF50);
         }
 
-        // УБРАНА тень под панелью - это убирало "хвост"
-        // drawRect(0, offsetY + TAB_HEIGHT - 2, width, offsetY + TAB_HEIGHT, 0xFF1A1A1A);
-
-        // Стрелки навигации и вкладки
         drawScrollArrows(mouseX, localMouseY);
         drawTabs(mouseX, localMouseY);
     }
@@ -108,9 +129,10 @@ public class TabBarWidget extends Gui {
         int arrowColor = canScrollLeft ? (hoverLeft ? 0xFF666666 : 0xFF555555) : 0xFF333333;
         int textColor = canScrollLeft ? 0xFFFFFF : 0x888888;
 
+        int arrowLeft = originX;
         int arrowTop = offsetY + TAB_HEIGHT / 2 - 10;
-        drawRect(10, arrowTop, 30, arrowTop + 20, arrowColor);
-        drawCenteredString(fontRenderer, "\u2039", 20, offsetY + TAB_HEIGHT / 2 - 4, textColor);
+        drawRect(arrowLeft, arrowTop, arrowLeft + ARROW_WIDTH, arrowTop + 20, arrowColor);
+        drawCenteredString(fontRenderer, "\u2039", arrowLeft + ARROW_WIDTH / 2, offsetY + TAB_HEIGHT / 2 - 4, textColor);
 
         // Правая стрелка
         boolean canScrollRight = canScrollRight();
@@ -118,51 +140,56 @@ public class TabBarWidget extends Gui {
         arrowColor = canScrollRight ? (hoverRight ? 0xFF666666 : 0xFF555555) : 0xFF333333;
         textColor = canScrollRight ? 0xFFFFFF : 0x888888;
 
-        int rightArrowLeft = width - 30;
-        drawRect(rightArrowLeft, arrowTop, rightArrowLeft + 20, arrowTop + 20, arrowColor);
-        drawCenteredString(fontRenderer, "\u203A", width - 20, offsetY + TAB_HEIGHT / 2 - 4, textColor);
+        int rightArrowLeft = originX + barWidth - ARROW_WIDTH;
+        drawRect(rightArrowLeft, arrowTop, rightArrowLeft + ARROW_WIDTH, arrowTop + 20, arrowColor);
+        drawCenteredString(fontRenderer, "\u203A", rightArrowLeft + ARROW_WIDTH / 2, offsetY + TAB_HEIGHT / 2 - 4, textColor);
     }
 
     private void drawTabs(int mouseX, int mouseY) {
-        // Пытаемся загрузить текстуру с обработкой ошибок
-        try {
-            minecraft.getTextureManager().bindTexture(TAB_TEXTURES);
-        } catch (Exception e) {
-            com.khimkhaosow.craftmastery.CraftMastery.logger.error("Failed to load tab textures: " + e.getMessage());
-        }
-        int startX = 40;
+        int startX = originX + ARROW_WIDTH + TAB_SPACING;
+        int maxVisible = getMaxVisibleTabs();
 
-        for (int i = tabScrollOffset; i < tabOrder.size() && i < tabScrollOffset + getMaxVisibleTabs(); i++) {
+        for (int i = tabScrollOffset; i < tabOrder.size() && i < tabScrollOffset + maxVisible; i++) {
             String tabId = tabOrder.get(i);
             TabData tabData = tabsById.get(tabId);
             if (tabData == null) {
                 continue;
             }
             int tabX = startX + (i - tabScrollOffset) * (TAB_WIDTH + TAB_SPACING);
+            int tabRightLimit = originX + barWidth - ARROW_WIDTH;
+            if (tabX + TAB_WIDTH > tabRightLimit) {
+                break;
+            }
             boolean isActive = tabId.equals(activeTabId);
-            // Исправлено: используем mouseY напрямую, так как isMouseOverTab теперь корректно проверяет координаты
             boolean isHovered = isMouseOverTab(mouseX, mouseY, tabX);
 
-            // Фон вкладки (исправлено: заполняет всю высоту, hover непрозрачный)
-            // int tabColor = isActive ? 0xFF4CAF50 : (isHovered ? 0x88555555 : 0x66555555); // Старый hover цвет (полупрозрачный)
-            int tabColor = isActive ? 0xFF4CAF50 : (isHovered ? 0xFF555555 : 0xFF444444); // Новый hover цвет (непрозрачный)
-            // int tabColor = isActive ? 0xFF4CAF50 : (isHovered ? 0xFFAAAAAA : 0xFF888888); // Альтернативный hover цвет (светлее)
-            drawRect(tabX, offsetY, tabX + TAB_WIDTH, offsetY + TAB_HEIGHT, tabColor);
+            int tabColor = isActive ? 0xFF4CAF50 : (isHovered ? 0xFF5A5A5A : 0xFF3C3C3C);
+            drawRect(tabX, offsetY, tabX + TAB_WIDTH, offsetY + TAB_HEIGHT - 2, tabColor);
 
-            // Значок и текст
-            String icon = getTabIcon(tabData);
-            int iconX = tabX + 10;
-            int iconY = offsetY + TAB_HEIGHT / 2 - 4;
-            int textColor = isActive ? 0xFF000000 : 0xFFFFFFFF;
+            ResourceLocation iconLocation = resolveIcon(tabData);
+            int iconX = tabX + 6;
+            int iconY = offsetY + (TAB_HEIGHT - ICON_SIZE) / 2 - 1;
+            GlStateManager.color(1F, 1F, 1F, 1F);
+            try {
+                minecraft.getTextureManager().bindTexture(iconLocation);
+                drawModalRectWithCustomSizedTexture(iconX, iconY, 0, 0, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
+            } catch (Exception e) {
+                minecraft.getTextureManager().bindTexture(DEFAULT_TAB_ICON);
+                drawModalRectWithCustomSizedTexture(iconX, iconY, 0, 0, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
+            }
 
-            drawString(fontRenderer, icon, iconX, iconY, textColor);
-            String displayName = truncateTabName(tabData.title != null ? tabData.title : tabId);
-            drawString(fontRenderer, displayName, iconX + 20, iconY, textColor);
+            int textColor = isActive ? 0xFF101010 : 0xFFEFEFEF;
+            int textX = iconX + ICON_SIZE + ICON_TEXT_PADDING;
+            int textMaxWidth = tabX + TAB_WIDTH - textX - 8;
+            String displayName = tabData.title != null ? tabData.title : tabId;
+            String trimmed = fontRenderer.trimStringToWidth(displayName, textMaxWidth);
+            fontRenderer.drawString(trimmed, textX, offsetY + (TAB_HEIGHT - fontRenderer.FONT_HEIGHT) / 2, textColor);
 
             // Счетчик
             String counter = getTabCounter(tabId);
             if (counter != null) {
-                drawString(fontRenderer, counter, tabX + TAB_WIDTH - 25, iconY, isActive ? 0xFF000000 : 0x88FFFFFF);
+                fontRenderer.drawString(counter, tabX + TAB_WIDTH - fontRenderer.getStringWidth(counter) - 6,
+                        offsetY + (TAB_HEIGHT - fontRenderer.FONT_HEIGHT) / 2, isActive ? 0xFF000000 : 0x88FFFFFF);
             }
         }
     }
@@ -187,10 +214,9 @@ public class TabBarWidget extends Gui {
             return true;
         }
 
-        int startX = 40;
+        int startX = originX + ARROW_WIDTH + TAB_SPACING;
         for (int i = tabScrollOffset; i < tabOrder.size() && i < tabScrollOffset + getMaxVisibleTabs(); i++) {
             int tabX = startX + (i - tabScrollOffset) * (TAB_WIDTH + TAB_SPACING);
-            // Исправлено: передаём глобальную mouseY в isMouseOverTab
             if (isMouseOverTab(mouseX, mouseY, tabX)) {
                 String tabId = tabOrder.get(i);
                 if (!tabId.equals(activeTabId)) {
@@ -208,12 +234,15 @@ public class TabBarWidget extends Gui {
 
     private boolean isMouseOverLeftArrow(int mouseX, int mouseY) {
         int localMouseY = mouseY - offsetY;
-        return mouseX >= 10 && mouseX <= 30 && localMouseY >= TAB_HEIGHT / 2 - 10 && localMouseY <= TAB_HEIGHT / 2 + 10;
+        return mouseX >= originX && mouseX <= originX + ARROW_WIDTH
+                && localMouseY >= TAB_HEIGHT / 2 - 10 && localMouseY <= TAB_HEIGHT / 2 + 10;
     }
 
     private boolean isMouseOverRightArrow(int mouseX, int mouseY) {
         int localMouseY = mouseY - offsetY;
-        return mouseX >= width - 30 && mouseX <= width - 10 && localMouseY >= TAB_HEIGHT / 2 - 10 && localMouseY <= TAB_HEIGHT / 2 + 10;
+        int rightArrowLeft = originX + barWidth - ARROW_WIDTH;
+        return mouseX >= rightArrowLeft && mouseX <= rightArrowLeft + ARROW_WIDTH
+                && localMouseY >= TAB_HEIGHT / 2 - 10 && localMouseY <= TAB_HEIGHT / 2 + 10;
     }
 
     // Исправлено: проверка mouseY относительно offsetY
@@ -226,20 +255,13 @@ public class TabBarWidget extends Gui {
         if (activeTabId == null) {
             return -1;
         }
-        int startX = 40;
+        int startX = originX + ARROW_WIDTH + TAB_SPACING;
         for (int i = tabScrollOffset; i < tabOrder.size() && i < tabScrollOffset + getMaxVisibleTabs(); i++) {
             if (tabOrder.get(i).equals(activeTabId)) {
                 return startX + (i - tabScrollOffset) * (TAB_WIDTH + TAB_SPACING);
             }
         }
         return -1;
-    }
-
-    private String getTabIcon(TabData tab) {
-        if (tab != null && tab.icon != null && !tab.icon.trim().isEmpty()) {
-            return tab.icon;
-        }
-        return "\u270E";
     }
 
     private String getTabCounter(String tabId) {
@@ -285,20 +307,12 @@ public class TabBarWidget extends Gui {
         }
     }
 
-    private String truncateTabName(String name) {
-        return name.length() > 12 ? name.substring(0, 10) + "..." : name;
-    }
-
-    private boolean canScrollLeft() {
-        return tabScrollOffset > 0;
-    }
-
-    private boolean canScrollRight() {
-        return tabScrollOffset < Math.max(0, tabOrder.size() - getMaxVisibleTabs());
-    }
-
     private int getMaxVisibleTabs() {
-        return (width - 80) / (TAB_WIDTH + TAB_SPACING);
+        int usableWidth = barWidth - (ARROW_WIDTH * 2) - (TAB_SPACING * 2);
+        if (usableWidth <= 0) {
+            return 1;
+        }
+        return Math.max(1, usableWidth / (TAB_WIDTH + TAB_SPACING));
     }
 
     public void setActiveTab(String tabId) {
@@ -315,6 +329,10 @@ public class TabBarWidget extends Gui {
         return TAB_HEIGHT;
     }
 
+    public static int getMinimumWidth() {
+        return MIN_WIDTH;
+    }
+
     public int getOffsetY() {
         return offsetY;
     }
@@ -326,5 +344,16 @@ public class TabBarWidget extends Gui {
     public boolean containsY(int screenY) {
         int local = screenY - offsetY;
         return local >= 0 && local <= TAB_HEIGHT;
+    }
+
+    private ResourceLocation resolveIcon(TabData tab) {
+        if (tab != null && tab.icon != null && !tab.icon.trim().isEmpty()) {
+            try {
+                return new ResourceLocation(tab.icon.trim());
+            } catch (Exception ignored) {
+                return DEFAULT_TAB_ICON;
+            }
+        }
+        return DEFAULT_TAB_ICON;
     }
 }

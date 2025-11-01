@@ -40,6 +40,8 @@ import net.minecraft.util.text.TextFormatting;
 public class GuiCraftMastery extends GuiScreen implements GuiYesNoCallback {
     // Текстура книги
     private static final ResourceLocation BOOK_TEXTURE = new ResourceLocation("craftmastery", "textures/gui/cniga.png");
+    private static final ResourceLocation BUTTON_TEXTURE_SELECTOR = new ResourceLocation("craftmastery", "textures/gui/selector.png");
+    private static final ResourceLocation BUTTON_TEXTURE_ADMIN = new ResourceLocation("craftmastery", "textures/gui/admin.png");
     // Текстуры для элементов интерфейса (пока используем стандартные)
     // private static final ResourceLocation GUI_ELEMENTS = new ResourceLocation("craftmastery", "textures/gui/elements.png");
     // Размеры интерфейса (можно масштабировать относительно размера окна)
@@ -51,6 +53,8 @@ public class GuiCraftMastery extends GuiScreen implements GuiYesNoCallback {
     // Виджеты
     private RecipeTreeWidget recipeTree; // Пока старый, обновим позже
     private TabBarWidget tabBar;
+    private int topButtonsLeftBlockRight = 40;
+    private int topButtonsRightBlockLeft = 0;
     private PointsPanelWidget pointsPanel;
     private LevelProgressWidget levelProgress;
 
@@ -109,43 +113,16 @@ public class GuiCraftMastery extends GuiScreen implements GuiYesNoCallback {
         // Рассчитываем позиции и размеры элементов интерфейса
         calculateGuiDimensions();
 
-        // --- НОВАЯ ЛОГИКА РАЗМЕЩЕНИЯ TabBarWidget ---
-        int iconSize = 22; // из addCoreButtons
-        int topY = 12;     // из addCoreButtons
-        int topButtonBottom = topY + iconSize; // Где заканчиваются верхние кнопки
-
-        // Позиция вкладок - чуть ниже верхних кнопок
-        int tabBarY = topButtonBottom + 10; // Отступ 10 пикселей
-
-        // Высота вкладок из TabBarWidget
-        int tabBarHeight = TabBarWidget.getPreferredHeight(); // TAB_HEIGHT = 32
-
-        // Позиция нижней панели (из addCoreButtons)
-        int bottomPanelTop = height - bottomPanelHeight; // Где начинается нижняя панель (backButton)
-        int backButtonHeight = 20; // Высота кнопки "Назад"
-
-        // Проверяем, помещаются ли вкладки между верхними кнопками и нижней панелью
-        int availableSpace = bottomPanelTop - topButtonBottom;
-        if (availableSpace >= tabBarHeight) {
-            // Хватает места, размещаем вкладки между
-            // tabBarY уже рассчитан как чуть ниже верхних кнопок
+        if (this.tabBar == null) {
+            this.tabBar = new TabBarWidget(Minecraft.getMinecraft(), player, 0, width, topPanelHeight + 6, this::handleTabSelection);
         } else {
-            // Не хватает места, размещаем вкладки ближе к верхним кнопкам
-            tabBarY = topButtonBottom + 2; // Минимальный отступ
+            this.tabBar.setLayout(0, width, topPanelHeight + 6);
         }
-
-        // Убедимся, что вкладки не наезжают на кнопку "Назад"
-        if (tabBarY + tabBarHeight > bottomPanelTop - backButtonHeight - 5) { // 5 - отступ от кнопки
-            tabBarY = bottomPanelTop - backButtonHeight - tabBarHeight - 5;
-        }
-
-        // Создаем TabBarWidget с новой позицией
-        this.tabBar = new TabBarWidget(Minecraft.getMinecraft(), player, width, tabBarY, this::handleTabSelection);
         this.tabBar.updateTabList();
-        // --- КОНЕЦ НОВОЙ ЛОГИКИ ---
 
         refreshExperienceWidgets();
         updateButtonsForPage();
+        updateTabBarLayoutFromButtons();
 
         if (currentPage == Page.SEARCH && searchField == null) {
             int centerX = width / 2;
@@ -200,9 +177,12 @@ public class GuiCraftMastery extends GuiScreen implements GuiYesNoCallback {
 
     private void updateButtonsForPage() {
         buttonList.clear();
+        topButtonsLeftBlockRight = 40;
+        topButtonsRightBlockLeft = width - 40;
 
         // Добавляем основные кнопки (шестеренки, назад, плюс)
         addCoreButtons();
+        updateTabBarLayoutFromButtons();
 
         // Поле поиска (только на странице поиска)
         if (currentPage == Page.SEARCH && searchField != null) {
@@ -950,22 +930,79 @@ public class GuiCraftMastery extends GuiScreen implements GuiYesNoCallback {
         int spacing = 8;
         int topY = 12;
 
-        settingsGearButton = new GuiButton(10, 10, topY, iconSize, iconSize, "\u2699");
+        settingsGearButton = new IconButton(10, 10, topY, iconSize, iconSize, "\u2699", BUTTON_TEXTURE_SELECTOR, 256, 200);
         buttonList.add(settingsGearButton);
 
-        GuiButton adminSettingsButton = new GuiButton(11, settingsGearButton.x + iconSize + spacing, topY, iconSize, iconSize, "\u26A0");
+        GuiButton adminSettingsButton = new IconButton(11, settingsGearButton.x + iconSize + spacing, topY, iconSize, iconSize, "\u26A0", BUTTON_TEXTURE_ADMIN, 96, 96);
         buttonList.add(adminSettingsButton);
+        topButtonsLeftBlockRight = adminSettingsButton.x + adminSettingsButton.width + spacing;
 
         backButton = new GuiButton(12, 10, height - bottomPanelHeight - 28, 60, 20, "Назад");
         buttonList.add(backButton);
 
         int plusSize = 28;
-        addRecipeButton = new GuiButton(13, width - plusSize - 14, topY - 1, plusSize, plusSize, "+");
+        int rightBlockX = width - plusSize - 14;
+        addRecipeButton = new IconButton(13, rightBlockX, topY - 1, plusSize, plusSize, "+", BUTTON_TEXTURE_SELECTOR, 256, 200);
         buttonList.add(addRecipeButton);
+        topButtonsRightBlockLeft = addRecipeButton.x;
 
         if (PermissionManager.getInstance().hasPermission(player, PermissionType.MANAGE_TABS)) {
-            GuiButton manageTabsButton = new GuiButton(14, width - (plusSize * 2) - spacing - 14, topY - 1, plusSize, plusSize, "T");
+            GuiButton manageTabsButton = new IconButton(14, addRecipeButton.x - plusSize - spacing, topY - 1, plusSize, plusSize, "T", BUTTON_TEXTURE_SELECTOR, 256, 200);
             buttonList.add(manageTabsButton);
+            topButtonsRightBlockLeft = manageTabsButton.x;
+        }
+        topButtonsRightBlockLeft -= spacing;
+    }
+
+    private static class IconButton extends GuiButton {
+        private final ResourceLocation texture;
+        private final int textureWidth;
+        private final int textureHeight;
+
+        IconButton(int id, int x, int y, int width, int height, String label,
+                   ResourceLocation texture, int textureWidth, int textureHeight) {
+            super(id, x, y, width, height, label);
+            this.texture = texture;
+            this.textureWidth = textureWidth;
+            this.textureHeight = textureHeight;
+        }
+
+        @Override
+        public void drawButton(Minecraft mc, int mouseX, int mouseY, float partialTicks) {
+            if (!visible) {
+                return;
+            }
+            hovered = mouseX >= x && mouseY >= y && mouseX < x + width && mouseY < y + height;
+            GlStateManager.color(1F, 1F, 1F, 1F);
+            mc.getTextureManager().bindTexture(texture);
+            drawModalRectWithCustomSizedTexture(x, y, 0, 0, width, height, textureWidth, textureHeight);
+            if (hovered) {
+                drawRect(x, y, x + width, y + height, 0x40FFFFFF);
+            }
+
+            int textColor;
+            if (!enabled) {
+                textColor = 0xFF777777;
+            } else {
+                textColor = hovered ? 0xFFFFFFFF : 0xFFE7E7E7;
+            }
+            drawCenteredString(mc.fontRenderer, displayString, x + width / 2, y + (height - 8) / 2, textColor);
+        }
+    }
+
+    private void updateTabBarLayoutFromButtons() {
+        if (tabBar == null) {
+            return;
+        }
+        int barTop = topPanelHeight + 6;
+        int availableLeft = Math.max(10, topButtonsLeftBlockRight);
+        int availableRight = topButtonsRightBlockLeft > 0 ? topButtonsRightBlockLeft : width - 10;
+        int availableWidth = availableRight - availableLeft;
+        if (availableWidth < TabBarWidget.getMinimumWidth()) {
+            int centeredX = Math.max(10, (width - TabBarWidget.getMinimumWidth()) / 2);
+            tabBar.setLayout(centeredX, TabBarWidget.getMinimumWidth(), barTop);
+        } else {
+            tabBar.setLayout(availableLeft, availableWidth, barTop);
         }
     }
 
