@@ -14,7 +14,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraftforge.fml.client.config.GuiCheckBox;
 import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.gui.GuiSlot;
 import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
@@ -39,14 +38,15 @@ import java.util.Objects;
  * Полноэкранный редактор конфигурации узлов дерева рецептов.
  */
 public class RecipeTreeEditorScreen extends GuiScreen {
-    private static final int LIST_WIDTH = 160;
-    private static final int FORM_LEFT = LIST_WIDTH + 24;
-    private static final int FIELD_WIDTH = 220;
+    private static final int FORM_LEFT = 36;
+    private static final int FORM_RIGHT_MARGIN = 20;
+    private static final int FIELD_WIDTH = 260;
     private static final int FIELD_HEIGHT = 16;
-    private static final int FIELD_GAP = 30;
-    private static final int SECTION_GAP = 56;
+    private static final int FIELD_GAP = 28;
+    private static final int SECTION_GAP = 52;
     private static final int PREVIEW_WIDTH = 200;
-    private static final int PREVIEW_HEIGHT = 180;
+    private static final int PREVIEW_HEIGHT = 210;
+    private static final int PREVIEW_MARGIN = 24;
 
     private static final int BTN_NEW = 200;
     private static final int BTN_SAVE = 201;
@@ -68,8 +68,6 @@ public class RecipeTreeEditorScreen extends GuiScreen {
     private List<NodeData> nodes = new ArrayList<>();
     private NodeData editingNode;
     private String selectedNodeId;
-    private NodeList nodeList;
-
     private GuiTextField idField;
     private GuiTextField tabField;
     private GuiTextField recipeIdField;
@@ -162,9 +160,6 @@ public class RecipeTreeEditorScreen extends GuiScreen {
         editorOpen = true;
         activeInstance = this;
 
-        nodeList = new NodeList();
-        nodeList.setSlotXBoundsFromLeft(10);
-
         int y = 40;
         idField = createField(y, "");
         y += FIELD_GAP;
@@ -193,9 +188,11 @@ public class RecipeTreeEditorScreen extends GuiScreen {
         y += FIELD_GAP;
         costField = createField(y, "0");
         y += FIELD_GAP;
-        posXField = createField(y, "0");
+
+        int positionRowY = y;
+        posXField = createField(FORM_LEFT, positionRowY, 120, "0");
+        posYField = createField(FORM_LEFT + 140, positionRowY, 120, "0");
         y += FIELD_GAP;
-        posYField = createField(y, "0");
 
         y += SECTION_GAP;
         modeButton = new GuiButton(BTN_MODE, FORM_LEFT, y, FIELD_WIDTH, 20, "Режим: всегда");
@@ -216,10 +213,11 @@ public class RecipeTreeEditorScreen extends GuiScreen {
         y += FIELD_GAP;
         unlockPermsField = createField(y, "");
 
-        int btnRowTop = height - 48;
-        int btnRowSpacing = 6;
+        int panelBottom = height - 40;
         int btnWidth = 92;
         int btnHeight = 20;
+        int btnRowSpacing = 6;
+        int btnRowTop = panelBottom - (btnHeight * 2 + btnRowSpacing);
         int btnGap = 8;
         int firstRowX = FORM_LEFT;
         int secondRowX = FORM_LEFT;
@@ -247,7 +245,11 @@ public class RecipeTreeEditorScreen extends GuiScreen {
     }
 
     private GuiTextField createField(int y, String value) {
-        GuiTextField field = new GuiTextField(0, fontRenderer, FORM_LEFT, y, FIELD_WIDTH, FIELD_HEIGHT);
+        return createField(FORM_LEFT, y, FIELD_WIDTH, value);
+    }
+
+    private GuiTextField createField(int x, int y, int width, String value) {
+        GuiTextField field = new GuiTextField(0, fontRenderer, x, y, width, FIELD_HEIGHT);
         field.setMaxStringLength(256);
         field.setText(value);
         return field;
@@ -641,10 +643,6 @@ public class RecipeTreeEditorScreen extends GuiScreen {
         nodes.sort(Comparator.comparing((NodeData node) -> node.tab == null ? "" : node.tab)
                 .thenComparing(node -> node.displayName == null ? "" : node.displayName)
                 .thenComparing(node -> node.id == null ? "" : node.id));
-        if (nodeList != null) {
-            nodeList = new NodeList();
-            nodeList.setSlotXBoundsFromLeft(10);
-        }
     }
 
     private List<String> splitList(String value) {
@@ -1167,19 +1165,14 @@ public class RecipeTreeEditorScreen extends GuiScreen {
     @Override
     public void handleMouseInput() throws IOException {
         super.handleMouseInput();
-        if (nodeList != null) {
-            nodeList.handleMouseInput();
-        }
     }
 
     @Override
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         drawDefaultBackground();
         drawCenteredString(fontRenderer, TextFormatting.GOLD + "Редактор дерева рецептов", width / 2, 10, 0xFFFFFF);
-        drawString(fontRenderer, TextFormatting.YELLOW + "Узлы", 20, 25, 0xFFFFFF);
-        if (nodeList != null) {
-            nodeList.drawScreen(mouseX, mouseY, partialTicks);
-        }
+
+        drawFormBackground();
 
         int labelY = 35;
         drawSectionTitle("Основные настройки", labelY - 18);
@@ -1217,8 +1210,7 @@ public class RecipeTreeEditorScreen extends GuiScreen {
             iconSelectButton.drawButton(mc, mouseX, mouseY, partialTicks);
         }
         labelY = drawFieldWithLabel(labelY, "Стоимость", costField);
-        labelY = drawFieldWithLabel(labelY, "Позиция X", posXField);
-        labelY = drawFieldWithLabel(labelY, "Позиция Y", posYField);
+        labelY = drawPositionRow(labelY, "Позиция X", "Позиция Y", posXField, posYField);
 
         labelY += SECTION_GAP;
         drawSectionTitle("Доступ", labelY - 18);
@@ -1241,7 +1233,7 @@ public class RecipeTreeEditorScreen extends GuiScreen {
         labelY = drawFieldWithLabel(labelY, "Unlock tabs", unlockTabsField);
         drawFieldWithLabel(labelY, "Unlock permissions", unlockPermsField);
 
-        drawString(fontRenderer, TextFormatting.GRAY + "Shift+ЛКМ по выходу → вход — создать связь; ПКМ — отмена", FORM_LEFT, height - 86, 0xFFFFFF);
+        drawString(fontRenderer, TextFormatting.GRAY + "Shift+ЛКМ по выходу → вход — создать связь; ПКМ — отмена", FORM_LEFT, labelY + 8, 0xFFFFFF);
 
         if (statusMessage != null) {
             drawCenteredString(fontRenderer, statusMessage, width / 2, height - 60, statusColor);
@@ -1276,63 +1268,33 @@ public class RecipeTreeEditorScreen extends GuiScreen {
                 creationConfirmButton.drawButton(mc, mouseX, mouseY, partialTicks);
             }
             if (creationCancelButton != null) {
-                creationCancelButton.drawButton(mc, mouseX, mouseY, partialTicks);
             }
         }
     }
 
-    private class NodeList extends GuiSlot {
-        NodeList() {
-            super(RecipeTreeEditorScreen.this.mc, LIST_WIDTH, RecipeTreeEditorScreen.this.height,
-                    40, RecipeTreeEditorScreen.this.height - 60, 20);
-        }
+    private void drawFormBackground() {
+        int panelLeft = FORM_LEFT - 24;
+        int maxPanelRight = width - PREVIEW_WIDTH - PREVIEW_MARGIN - 12;
+        int panelRight = Math.min(FORM_LEFT + FIELD_WIDTH + FORM_RIGHT_MARGIN, maxPanelRight);
+        int panelTop = 28;
+        int panelBottom = height - 36;
+        drawGradientRect(panelLeft, panelTop, panelRight, panelBottom, 0xAA1D1D1D, 0xAA121212);
+        drawRect(panelLeft, panelTop, panelRight, panelTop + 1, 0x55FFFFFF);
+        drawRect(panelLeft, panelBottom - 1, panelRight, panelBottom, 0x33000000);
+    }
 
-        @Override
-        protected int getSize() {
-            return nodes.size();
-        }
+    private int drawPositionRow(int labelY, String labelX, String labelYText, GuiTextField fieldX, GuiTextField fieldY) {
+        drawString(fontRenderer, labelX, FORM_LEFT, labelY, 0xFFFFFF);
+        fieldX.x = FORM_LEFT;
+        fieldX.y = labelY + 12;
+        fieldX.drawTextBox();
 
-        @Override
-        protected void elementClicked(int index, boolean doubleClick, int mouseX, int mouseY) {
-            if (index >= 0 && index < nodes.size()) {
-                selectNode(nodes.get(index));
-            }
-        }
+        int secondaryLabelX = FORM_LEFT + 140;
+        drawString(fontRenderer, labelYText, secondaryLabelX, labelY, 0xFFFFFF);
+        fieldY.x = secondaryLabelX;
+        fieldY.y = labelY + 12;
+        fieldY.drawTextBox();
 
-        @Override
-        protected boolean isSelected(int index) {
-            return index >= 0 && index < nodes.size() && Objects.equals(nodes.get(index).id, selectedNodeId);
-        }
-
-        @Override
-        protected void drawBackground() {
-        }
-
-        @Override
-        protected void drawSlot(int idx, int right, int top, int heightIn, int mouseXIn, int mouseYIn, float partialTicks) {
-            if (idx < 0 || idx >= nodes.size()) {
-                return;
-            }
-            NodeData node = nodes.get(idx);
-            String title = node.displayName != null && !node.displayName.trim().isEmpty()
-                ? node.displayName
-                : (node.id != null ? node.id : "<без id>");
-            RecipeTreeEditorScreen.this.fontRenderer.drawString(title, this.left + 3, top + 2, 0xFFFFFF);
-            String tab = node.tab != null ? node.tab : "default";
-            RecipeTreeEditorScreen.this.fontRenderer.drawString(TextFormatting.GRAY + tab, this.left + 3, top + 12, 0xAAAAAA);
-        }
-
-        @Override
-        public void drawScreen(int mouseX, int mouseY, float partialTicks) {
-            this.width = LIST_WIDTH;
-            this.left = 10;
-            this.right = this.left + LIST_WIDTH;
-            super.drawScreen(mouseX, mouseY, partialTicks);
-        }
-
-        @Override
-        protected int getScrollBarX() {
-            return this.right - 6;
-        }
+        return labelY + FIELD_GAP;
     }
 }

@@ -158,6 +158,11 @@ public class Tab {
         CraftMastery.logger.info("Player {} reset tab {}", playerUUID, id);
     }
 
+    public void forceStudyForPlayer(UUID playerUUID) {
+        studiedByPlayers.add(playerUUID);
+        CraftMastery.logger.info("Player {} force-studied tab {}", playerUUID, id);
+    }
+
     /**
      * Проверяет, изучена ли вкладка игроком
      */

@@ -292,6 +292,7 @@ public class TabBarWidget extends Gui {
             int tabX = startX + (i - tabScrollOffset) * (TAB_WIDTH + TAB_SPACING);
             if (isMouseOverTab(mouseX, mouseY, tabX)) {
                 String tabId = tabOrder.get(i);
+                TabData tabData = tabsById.get(tabId);
                 boolean unlocked = tabAvailability.getOrDefault(tabId, Boolean.TRUE);
                 if (!unlocked) {
                     notifyLockedTab(tabData);
