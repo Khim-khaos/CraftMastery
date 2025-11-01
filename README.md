@@ -29,7 +29,7 @@ CraftMastery — это мод для Minecraft 1.12.2, добавляющий �
 1. Установите JDK 8 (или используйте Azul JDK, как рекомендует Gradle скрипт).
 2. Клонируйте репозиторий:
    ```bash
-   git clone https://github.com/<your-org>/CraftMastery.git
+   git clone https://github.com/Khim-khaos/CraftMastery.git
    cd CraftMastery
    ```
 3. Убедитесь, что в файле `gradle.properties` заданны значения `mod_version`, `mod_id`, `mod_name` и др.
